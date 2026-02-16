@@ -10,6 +10,7 @@ export default function AdminDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
 
     useEffect(() => {
         // 简单的前端保护
@@ -27,11 +28,19 @@ export default function AdminDashboard() {
             // 在实际应用中，这里应该带上 token
             const res = await fetch('/api/admin/stats');
             const data = await res.json();
+
             if (data.code === 200) {
                 setStats(data.data);
+                setError('');
+            } else {
+                console.error('API Error:', data);
+                setError(data.message || '获取数据失败');
+                // 如果是 500，可能是数据库没连接，仍然把 stats 设为 null
+                setStats(null);
             }
-        } catch (e) {
-            console.error(e);
+        } catch (e: any) {
+            console.error('Network Error:', e);
+            setError(e.message || '网络请求失败');
         } finally {
             setLoading(false);
         }
@@ -41,6 +50,23 @@ export default function AdminDashboard() {
         return <div className="min-h-screen flex items-center justify-center">加载中...</div>;
     }
 
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-red-50">
+                <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">错误</h2>
+                    <p className="text-gray-700 mb-6">{error}</p>
+                    <button
+                        onClick={fetchStats}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        重试
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
@@ -48,17 +74,29 @@ export default function AdminDashboard() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">🛠️ 系统管理后台</h1>
-                    <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-lg shadow-sm">
-                        状态: <span className="text-green-600 font-semibold">运行中</span>
+                    <div className={`text-sm px-4 py-2 rounded-lg shadow-sm font-semibold ${error ? 'bg-red-100 text-red-600' : 'bg-white text-green-600'
+                        }`}>
+                        状态: {error ? '异常' : '运行中'}
                     </div>
                 </div>
+
+                {error && (
+                    <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-6 text-red-800">
+                        <h3 className="font-bold text-lg mb-2">⚠️ 数据加载失败</h3>
+                        <p>{error}</p>
+                        <div className="mt-4 text-sm text-red-600">
+                            <p>可能是数据库连接失败或表结构未创建。</p>
+                            <p>请尝试访问 <a href="/api/debug" target="_blank" className="underline font-bold">/api/debug</a> 查看详细诊断信息。</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* 数据概览卡片 */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="text-sm text-gray-500 mb-1">总用户数</div>
                         <div className="text-3xl font-bold text-blue-600">
-                            {stats?.stats?.totalUsers || 0}
+                            {stats?.stats?.totalUsers ?? '-'}
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
