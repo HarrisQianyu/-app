@@ -6,12 +6,17 @@ declare global {
     var prisma: PrismaClient | undefined;
 }
 
-export const prisma = global.prisma || new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+// 只在有数据库连接时创建 Prisma 客户端
+let prisma: PrismaClient | undefined;
 
-if (process.env.NODE_ENV !== 'production') {
-    global.prisma = prisma;
+if (process.env.DATABASE_URL) {
+    prisma = global.prisma || new PrismaClient({
+        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+        global.prisma = prisma;
+    }
 }
 
 export default prisma;

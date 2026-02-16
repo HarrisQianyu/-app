@@ -21,6 +21,22 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    // 数据库连接检查
+    try {
+        await prisma.$connect();
+    } catch (dbError) {
+        console.error('Database connection error:', dbError);
+        return NextResponse.json(
+            {
+                code: 500,
+                message: '数据库连接失败',
+                data: null,
+                error: dbError instanceof Error ? dbError.message : 'Unknown database error',
+            },
+            { status: 500 }
+        );
+    }
+
     try {
         // 1. 解析请求体
         const body = await request.json();

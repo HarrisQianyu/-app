@@ -33,6 +33,18 @@ function getUserIdFromToken(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
     try {
+        // 检查数据库连接
+        if (!prisma) {
+            return NextResponse.json(
+                {
+                    code: 503,
+                    message: '数据库未配置，请联系管理员',
+                    data: null,
+                },
+                { status: 503 }
+            );
+        }
+
         // 1. 验证用户身份
         const userId = getUserIdFromToken(request);
 
@@ -109,6 +121,18 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
     try {
+        // 检查数据库连接
+        if (!prisma) {
+            return NextResponse.json(
+                {
+                    code: 503,
+                    message: '数据库未配置，请联系管理员',
+                    data: null,
+                },
+                { status: 503 }
+            );
+        }
+
         // 1. 验证用户身份
         const userId = getUserIdFromToken(request);
 
