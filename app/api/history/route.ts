@@ -33,20 +33,57 @@ function getUserIdFromToken(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
     try {
-        // 检查数据库连接
-        if (!prisma) {
+        // 1. 验证用户身份
+        const userId = getUserIdFromToken(request);
+
+        if (!userId) {
             return NextResponse.json(
                 {
-                    code: 503,
-                    message: '数据库未配置，请联系管理员',
+                    code: 401,
+                    message: '未授权，请先登录',
                     data: null,
                 },
-                { status: 503 }
+                { status: 401 }
             );
         }
 
-        // 1. 验证用户身份
-        const userId = getUserIdFromToken(request);
+        // 无数据库模式（Mock 历史）
+        if (!prisma) {
+            return NextResponse.json(
+                {
+                    code: 200,
+                    message: '查询成功 (演示模式)',
+                    data: {
+                        histories: [
+                            {
+                                id: 'mock-history-1',
+                                imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+                                resultCount: 12,
+                                createdAt: new Date().toISOString(),
+                                results: [
+                                    {
+                                        platform: 'taobao',
+                                        title: '演示商品 - 运动鞋',
+                                        price: 299.00,
+                                        similarityScore: 95
+                                    }
+                                ]
+                            }
+                        ],
+                        pagination: {
+                            page: 1,
+                            pageSize: 10,
+                            total: 1,
+                            totalPages: 1,
+                        },
+                    },
+                },
+                { status: 200 }
+            );
+        }
+
+        // 数据库模式
+        // 2. 获取分页参数
 
         if (!userId) {
             return NextResponse.json(
@@ -121,20 +158,34 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
     try {
-        // 检查数据库连接
-        if (!prisma) {
+        // 1. 验证用户身份
+        const userId = getUserIdFromToken(request);
+
+        if (!userId) {
             return NextResponse.json(
                 {
-                    code: 503,
-                    message: '数据库未配置，请联系管理员',
+                    code: 401,
+                    message: '未授权，请先登录',
                     data: null,
                 },
-                { status: 503 }
+                { status: 401 }
             );
         }
 
-        // 1. 验证用户身份
-        const userId = getUserIdFromToken(request);
+        // 无数据库模式
+        if (!prisma) {
+            return NextResponse.json(
+                {
+                    code: 200,
+                    message: '删除成功 (演示模式)',
+                    data: null,
+                },
+                { status: 200 }
+            );
+        }
+
+        // 数据库模式
+        // 检查数据库连接
 
         if (!userId) {
             return NextResponse.json(

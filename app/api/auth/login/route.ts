@@ -21,18 +21,6 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
-        // 检查数据库连接
-        if (!prisma) {
-            return NextResponse.json(
-                {
-                    code: 503,
-                    message: '数据库未配置，请联系管理员',
-                    data: null,
-                },
-                { status: 503 }
-            );
-        }
-
         // 1. 解析请求体
         const body = await request.json();
 

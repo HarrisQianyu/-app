@@ -87,38 +87,40 @@ export async function POST(request: NextRequest) {
         // 4. 如果用户已登录，保存搜索历史
         if (userId) {
             try {
-                const imageHash = Buffer.from(imageUrl).toString('base64').substring(0, 32);
+                if (prisma) {
+                    const imageHash = Buffer.from(imageUrl).toString('base64').substring(0, 32);
 
-                const history = await prisma.searchHistory.create({
-                    data: {
-                        userId,
-                        imageUrl,
-                        imageHash,
-                        resultCount: mockResults.length,
-                        searchParams: {
-                            platforms: ['taobao', 'jd', 'pdd'],
-                            timestamp: new Date().toISOString(),
+                    const history = await prisma.searchHistory.create({
+                        data: {
+                            userId,
+                            imageUrl,
+                            imageHash,
+                            resultCount: mockResults.length,
+                            searchParams: {
+                                platforms: ['taobao', 'jd', 'pdd'],
+                                timestamp: new Date().toISOString(),
+                            },
                         },
-                    },
-                });
+                    });
 
-                // 保存搜索结果
-                await prisma.searchResult.createMany({
-                    data: mockResults.map(result => ({
-                        historyId: history.id,
-                        platform: result.platform,
-                        productId: result.productId,
-                        title: result.title,
-                        price: result.price,
-                        originalPrice: result.originalPrice || result.price,
-                        imageUrl: result.imageUrl,
-                        productUrl: result.productUrl,
-                        sales: result.sales,
-                        shopName: result.shopName,
-                        shopRating: result.shopRating,
-                        similarityScore: result.similarityScore,
-                    })),
-                });
+                    // 保存搜索结果
+                    await prisma.searchResult.createMany({
+                        data: mockResults.map(result => ({
+                            historyId: history.id,
+                            platform: result.platform,
+                            productId: result.productId,
+                            title: result.title,
+                            price: result.price,
+                            originalPrice: result.originalPrice || result.price,
+                            imageUrl: result.imageUrl,
+                            productUrl: result.productUrl,
+                            sales: result.sales,
+                            shopName: result.shopName,
+                            shopRating: result.shopRating,
+                            similarityScore: result.similarityScore,
+                        })),
+                    });
+                }
             } catch (dbError) {
                 console.error('Save history error:', dbError);
                 // 即使保存历史失败，也返回搜索结果
