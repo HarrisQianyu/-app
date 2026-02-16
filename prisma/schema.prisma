@@ -1,0 +1,91 @@
+// Prisma 数据库 Schema
+// 使用 PostgreSQL 数据库
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  username      String
+  passwordHash  String
+  avatar        String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  // 关联关系
+  searchHistories SearchHistory[]
+  
+  @@index([email])
+  @@map("users")
+}
+
+// 搜索历史表
+model SearchHistory {
+  id            String          @id @default(cuid())
+  userId        String
+  imageUrl      String
+  imageHash     String          // 图片哈希，用于去重
+  searchParams  Json?           // 搜索参数（JSON格式）
+  resultCount   Int             @default(0)
+  createdAt     DateTime        @default(now())
+  
+  // 关联关系
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results       SearchResult[]
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_histories")
+}
+
+// 搜索结果表
+model SearchResult {
+  id                String        @id @default(cuid())
+  historyId         String
+  platform          String        // taobao, jd, pdd, 1688
+  productId         String        // 平台商品ID
+  title             String
+  price             Float
+  originalPrice     Float?
+  imageUrl          String
+  productUrl        String
+  sales             Int           @default(0)
+  shopName          String
+  shopRating        Float?
+  similarityScore   Int           @default(0) // 0-100
+  createdAt         DateTime      @default(now())
+  
+  // 关联关系
+  history           SearchHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)
+  
+  @@index([historyId])
+  @@index([platform])
+  @@map("search_results")
+}
+
+// API 调用日志表（用于监控和限流）
+model ApiLog {
+  id            String          @id @default(cuid())
+  userId        String?
+  platform      String          // taobao, jd, pdd, 1688
+  endpoint      String
+  requestData   Json?
+  responseData  Json?
+  statusCode    Int
+  duration      Int             // 毫秒
+  errorMessage  String?
+  createdAt     DateTime        @default(now())
+  
+  @@index([userId])
+  @@index([platform])
+  @@index([createdAt])
+  @@map("api_logs")
+}
